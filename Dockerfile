@@ -12,6 +12,7 @@ COPY . .
 # Set environment variables for Render
 ENV RENAL_HOST=0.0.0.0
 ENV PORT=8780
+ENV PYTHONUNBUFFERED=1
 
 # Expose the port
 EXPOSE 8780
