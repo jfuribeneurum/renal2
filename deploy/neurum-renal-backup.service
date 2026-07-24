@@ -1,0 +1,19 @@
+[Unit]
+Description=Respaldo de Neurum Gestion Renal
+After=neurum-renal.service
+
+[Service]
+Type=oneshot
+User=neurum-renal
+Group=neurum-renal
+WorkingDirectory=/opt/neurum-renal/app
+Environment=PYTHONDONTWRITEBYTECODE=1
+EnvironmentFile=/etc/neurum-renal.env
+ExecStart=/opt/neurum-renal/venv/bin/python /opt/neurum-renal/app/backup.py
+ExecStartPost=/opt/neurum-renal/app/deploy/backup_to_s3.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/neurum-renal /var/backups/neurum-renal

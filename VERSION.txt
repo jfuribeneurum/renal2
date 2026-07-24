@@ -1,0 +1,10 @@
+Neurum Gestion Renal Compartida
+Version: 2.3.3
+Fecha: 2026-07-23
+
+Repositorio desplegable en AWS EC2 sin Docker, con HTTPS y respaldo a S3.
+Motor renal e indicadores: sin cambios.
+Modulo Malla CAC ERC: conciliacion de atenciones, soportes PDF y salida SISCAC auditable.
+TFG: solo se reporta el valor registrado en la atencion; sin calculo automatico.
+Consolidacion CAC: una fila por paciente, fechas y fuentes independientes por paraclinico.
+Signos vitales: valor mas reciente disponible por variable, con fecha, fuente y respaldo en soportes anteriores.

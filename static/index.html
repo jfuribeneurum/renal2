@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Gestión compartida de cohorte DM y vigilancia renal Neurum" />
+    <title>Neurum | Gestión renal compartida</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body data-shared-app="true">
+    <div id="authLoading" class="auth-loading" role="status">
+      <img src="/static/assets/neurum-logo.png" alt="Neurum Centro de especialistas" />
+      <span>Preparando gestión clínica segura...</span>
+    </div>
+
+    <div id="appLayout" class="shared-layout" hidden>
+      <aside class="app-sidebar" aria-label="Navegación principal">
+        <div class="sidebar-brand">
+          <img src="/static/assets/neurum-logo.png" alt="Neurum Centro de especialistas" />
+          <span>Gestión renal</span>
+        </div>
+
+        <nav class="side-nav">
+          <button class="side-nav-item active" type="button" data-route="dashboard">
+            <i data-lucide="layout-dashboard" aria-hidden="true"></i>
+            <span>Resumen</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="cohort">
+            <i data-lucide="users" aria-hidden="true"></i>
+            <span>Cohorte renal</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="tasks">
+            <i data-lucide="list-checks" aria-hidden="true"></i>
+            <span>Tareas</span>
+            <strong id="sidebarTaskCount" class="nav-count">0</strong>
+          </button>
+          <button class="side-nav-item" type="button" data-route="indicators">
+            <i data-lucide="chart-no-axes-combined" aria-hidden="true"></i>
+            <span>Gráficas</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="imports">
+            <i data-lucide="file-up" aria-hidden="true"></i>
+            <span>Cargues</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="cac">
+            <i data-lucide="file-check-2" aria-hidden="true"></i>
+            <span>Malla CAC</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="audit" data-permission="view_audit">
+            <i data-lucide="history" aria-hidden="true"></i>
+            <span>Trazabilidad</span>
+          </button>
+          <button class="side-nav-item" type="button" data-route="admin" data-permission="manage_users">
+            <i data-lucide="shield-check" aria-hidden="true"></i>
+            <span>Administración</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-foot">
+          <div class="security-state">
+            <i data-lucide="lock-keyhole" aria-hidden="true"></i>
+            <span>Sesión protegida</span>
+          </div>
+          <button id="logoutButton" class="side-logout" type="button">
+            <i data-lucide="log-out" aria-hidden="true"></i>
+            <span>Cerrar sesión</span>
+          </button>
+        </div>
+      </aside>
+
+      <div class="workspace">
+        <header class="workspace-header">
+          <div class="workspace-heading">
+            <button id="sidebarToggle" class="icon-only mobile-menu" type="button" aria-label="Abrir menú">
+              <i data-lucide="menu" aria-hidden="true"></i>
+            </button>
+            <div>
+              <p class="eyebrow">Cohorte DM / ERC</p>
+              <h1 id="pageTitle">Resumen de gestión</h1>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button id="quickTaskButton" class="icon-button primary" type="button">
+              <i data-lucide="plus" aria-hidden="true"></i>
+              Nueva tarea
+            </button>
+            <button id="themeToggle" class="icon-button" type="button">Modo oscuro</button>
+            <button id="userMenuButton" class="user-chip" type="button" aria-label="Información del usuario">
+              <span id="userInitials">NU</span>
+              <span>
+                <strong id="currentUserName">Usuario</strong>
+                <small id="currentUserRole">Rol</small>
+              </span>
+            </button>
+          </div>
+        </header>
+
+        <main class="app-shell shared-main">
+          <input id="cohortFile" class="sr-only-file" type="file" accept=".xlsx,.csv,.tsv" />
+          <input id="labsFile" class="sr-only-file" type="file" accept=".xlsx,.csv,.tsv" />
+          <input id="cacConsultationsFile" class="sr-only-file" type="file" accept=".xlsx" />
+          <input id="cacSupportFiles" class="sr-only-file" type="file" accept=".pdf" multiple />
+
+          <section class="app-view active" data-view="dashboard">
+            <div class="view-intro">
+              <div>
+                <p class="eyebrow">Vigilancia diaria</p>
+                <h2>Prioridades clínicas y operativas</h2>
+                <p>La misma lógica renal validada, organizada para gestionar responsables y fechas.</p>
+              </div>
+              <div class="date-context">
+                <span>Fecha de vigilancia</span>
+                <strong id="dashboardWatchDate">Hoy</strong>
+              </div>
+            </div>
+
+            <section class="summary-grid" aria-label="Resumen de vigilancia">
+              <article class="metric critical">
+                <span>Críticas</span>
+                <strong id="metricCritical">0</strong>
+                <small>Requieren gestión inmediata</small>
+              </article>
+              <article class="metric warning">
+                <span>Próximas</span>
+                <strong id="metricWarning">0</strong>
+                <small>Dentro de la ventana</small>
+              </article>
+              <article class="metric ok">
+                <span>Al día</span>
+                <strong id="metricOk">0</strong>
+                <small>Seguimiento vigente</small>
+              </article>
+              <article class="metric neutral">
+                <span>Pacientes activos</span>
+                <strong id="metricPatients">0</strong>
+                <small>Cohorte compartida</small>
+              </article>
+            </section>
+
+            <section class="task-overview">
+              <header class="section-heading">
+                <div>
+                  <p class="eyebrow">Gestión administrativa</p>
+                  <h2>Tareas del equipo</h2>
+                </div>
+                <button class="text-action" type="button" data-go-route="tasks">Ver todas</button>
+              </header>
+              <div class="task-metric-grid">
+                <article><span>Pendientes</span><strong id="taskMetricPending">0</strong></article>
+                <article><span>En gestión</span><strong id="taskMetricManaging">0</strong></article>
+                <article><span>Programadas</span><strong id="taskMetricScheduled">0</strong></article>
+                <article class="overdue"><span>Vencidas</span><strong id="taskMetricOverdue">0</strong></article>
+              </div>
+              <div id="dashboardTaskList" class="compact-task-list">
+                <div class="empty-mini">No hay tareas pendientes.</div>
+              </div>
+            </section>
+          </section>
+
+          <section class="app-view" data-view="cohort" hidden>
+            <div class="view-intro compact">
+              <div>
+                <p class="eyebrow">Gestión clínica</p>
+                <h2>Seguimiento por paciente y paraclínico</h2>
+                <p>Fechas, ventanas, alarmas, cumplimiento y gestión en columnas independientes.</p>
+              </div>
+            </div>
+
+            <section class="control-band">
+              <div class="control-group">
+                <label for="watchDate">Fecha de vigilancia</label>
+                <input id="watchDate" type="date" />
+              </div>
+              <div class="control-group">
+                <label for="dueSoonDays">Ventana clínica (+/- días)</label>
+                <input id="dueSoonDays" type="number" min="29" max="29" value="29" readonly />
+              </div>
+              <div class="control-group">
+                <label for="renalAnnualDays">Renal anual</label>
+                <input id="renalAnnualDays" type="number" min="360" max="360" value="360" readonly />
+              </div>
+              <div class="control-group">
+                <label for="renalQuarterDays">Renal 3 meses</label>
+                <input id="renalQuarterDays" type="number" min="90" max="90" value="90" readonly />
+              </div>
+              <div class="control-group">
+                <label for="hba1cDays">HbA1c</label>
+                <input id="hba1cDays" type="number" min="30" max="180" value="119" />
+              </div>
+              <div class="control-group">
+                <label for="lipidDays">Perfil lipídico</label>
+                <input id="lipidDays" type="number" min="90" max="730" value="365" />
+              </div>
+            </section>
+
+            <section class="toolbar" aria-label="Filtros y acciones">
+              <div class="search-box">
+                <i data-lucide="search" aria-hidden="true"></i>
+                <input id="searchInput" type="search" placeholder="Buscar paciente, documento o IPS" />
+              </div>
+              <select id="severityFilter" aria-label="Filtrar por severidad">
+                <option value="all">Todas las alarmas</option>
+                <option value="critical">Críticas</option>
+                <option value="warning">Próximas</option>
+                <option value="ok">Al día</option>
+              </select>
+              <select id="examFilter" aria-label="Filtrar por examen">
+                <option value="all">Todos los exámenes</option>
+                <option value="renal">Algoritmo renal</option>
+                <option value="hba1c">HbA1c</option>
+                <option value="lipids">Perfil lipídico</option>
+              </select>
+              <button id="exportCsv" class="icon-button" type="button">
+                <i data-lucide="download" aria-hidden="true"></i> Exportar
+              </button>
+            </section>
+
+            <section class="status-strip" id="statusStrip" aria-live="polite">Sin datos cargados.</section>
+
+            <section class="table-wrap clinical-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Prioridad</th><th>Tipo de documento</th><th>Documento</th><th>Paciente</th>
+                    <th>TFG actual</th><th>Fecha TFG actual</th><th>ERC</th>
+                    <th>Fecha prox creatinina</th><th>Creatinina alarma</th><th>Creatinina cumple algoritmo</th><th>Creatinina días venc.</th><th>Creatinina días faltan</th><th>Creatinina paciente gestionado</th>
+                    <th>Fecha prox HbA1c</th><th>HbA1c alarma</th><th>HbA1c días venc.</th><th>HbA1c días faltan</th><th>HbA1c paciente gestionado</th>
+                    <th>Fecha prox microalb/ACR</th><th>Microalb/ACR alarma</th><th>Microalb/ACR cumple algoritmo</th><th>Microalb/ACR días venc.</th><th>Microalb/ACR días faltan</th><th>Microalb/ACR paciente gestionado</th>
+                    <th>Fecha prox perfil lipídico</th><th>Perfil lipídico alarma</th><th>Perfil lipídico días venc.</th><th>Perfil lipídico días faltan</th><th>Perfil lipídico paciente gestionado</th>
+                    <th>Creatinina valor/fecha</th><th>Albuminuria/ACR valor/fecha</th><th>HbA1c valor/fecha</th><th>Perfil lipídico valor/fecha</th><th>Acciones</th>
+                  </tr>
+                </thead>
+                <tbody id="patientRows"></tbody>
+              </table>
+              <div id="emptyState" class="empty-state">Carga una cohorte para iniciar la vigilancia.</div>
+            </section>
+
+            <footer class="pagination">
+              <button id="prevPage" class="icon-button" type="button"><i data-lucide="chevron-left"></i> Anterior</button>
+              <span id="pageInfo">Página 1 de 1</span>
+              <button id="nextPage" class="icon-button" type="button">Siguiente <i data-lucide="chevron-right"></i></button>
+            </footer>
+          </section>
+
+          <section class="app-view" data-view="tasks" hidden>
+            <div class="view-intro compact">
+              <div>
+                <p class="eyebrow">Trabajo colaborativo</p>
+                <h2>Tareas y trazabilidad de gestión</h2>
+                <p>Cada cambio conserva responsable, fecha, estado y nota de seguimiento.</p>
+              </div>
+              <button id="newTaskButton" class="icon-button primary" type="button"><i data-lucide="plus"></i> Nueva tarea</button>
+            </div>
+            <section class="task-toolbar">
+              <div class="task-filter-row">
+                <div class="segmented-control" role="group" aria-label="Estado de tareas">
+                  <button class="active" type="button" data-task-status="all">Todas</button>
+                  <button type="button" data-task-status="pendiente">Pendientes</button>
+                  <button type="button" data-task-status="en_gestion">En gestión</button>
+                  <button type="button" data-task-status="programada">Programadas</button>
+                  <button type="button" data-task-status="completada">Resueltas</button>
+                </div>
+                <label class="task-search"><i data-lucide="search"></i><input id="taskSearch" type="search" placeholder="Buscar paciente o tarea" /></label>
+              </div>
+              <label class="toggle-control"><input id="onlyMyTasks" type="checkbox" /> <span>Solo mis tareas</span></label>
+            </section>
+            <div id="taskBoard" class="task-board"></div>
+          </section>
+
+          <section class="app-view" data-view="indicators" hidden>
+            <div class="view-intro compact">
+              <div>
+                <p class="eyebrow">Analítica de la cohorte</p>
+                <h2>Gráficas clínicas y administrativas</h2>
+                <p>Lectura operativa de alertas, cobertura de paraclínicos y estadio renal sobre los pacientes activos.</p>
+              </div>
+              <strong id="cohortAnalyticsSummary" class="analytics-summary">Sin datos</strong>
+            </div>
+            <section class="cohort-chart-grid" aria-label="Gráficas descriptivas de la cohorte">
+              <article class="chart-card"><header><div><span class="chart-kicker">Prioridad</span><h3>Estado de vigilancia</h3></div><i data-lucide="siren"></i></header><div id="cohortPriorityChart" class="chart-stage compact"></div></article>
+              <article class="chart-card wide"><header><div><span class="chart-kicker">Seguimiento</span><h3>Alarmas por paraclínico</h3></div><i data-lucide="flask-conical"></i></header><div id="examStatusChart" class="chart-stage compact"></div></article>
+              <article class="chart-card"><header><div><span class="chart-kicker">Riesgo renal</span><h3>Distribución por estadio</h3></div><i data-lucide="activity"></i></header><div id="renalStageChart" class="chart-stage compact"></div></article>
+              <article class="chart-card"><header><div><span class="chart-kicker">Calidad del dato</span><h3>Cobertura de paraclínicos</h3></div><i data-lucide="clipboard-check"></i></header><div id="examCoverageChart" class="chart-stage compact"></div></article>
+            </section>
+            <section class="indicator-panel" aria-label="Indicadores contractuales">
+              <header class="section-heading">
+                <div><p class="eyebrow">Indicadores contractuales</p><h2>Resultado a fecha de vigilancia</h2></div>
+                <strong id="indicatorSummaryText">Sin datos</strong>
+              </header>
+              <div id="indicatorCards" class="indicator-cards"></div>
+              <div class="chart-grid">
+                <article class="chart-card"><h3>Resultado vs meta</h3><div id="indicatorBarChart" class="chart-stage"></div></article>
+                <article class="chart-card"><h3>Semáforo</h3><div id="indicatorStatusChart" class="chart-stage compact"></div></article>
+              </div>
+            </section>
+          </section>
+
+          <section class="app-view" data-view="imports" hidden>
+            <div class="view-intro compact">
+              <div><p class="eyebrow">Datos compartidos</p><h2>Cargues de cohorte y paraclínicos</h2><p>Los archivos se procesan en la sesión y los registros resultantes se guardan en el servidor.</p></div>
+            </div>
+            <section class="load-board" aria-label="Cargue de datos">
+              <article class="upload-card primary" data-upload-zone="cohortFile">
+                <label for="cohortFile" class="upload-target">
+                  <span class="upload-icon"><i data-lucide="users-round"></i></span>
+                  <span class="upload-copy"><strong>Cohorte de pacientes</strong><small>XLSX, CSV o TSV</small></span>
+                  <span id="cohortUploadState" class="upload-state pending">Pendiente</span>
+                </label>
+              </article>
+              <article class="upload-card" data-upload-zone="labsFile">
+                <label for="labsFile" class="upload-target">
+                  <span class="upload-icon"><i data-lucide="flask-conical"></i></span>
+                  <span class="upload-copy"><strong>Paraclínicos diarios</strong><small>Formato ancho o plantilla diaria</small></span>
+                  <span id="labsUploadState" class="upload-state pending">Pendiente</span>
+                </label>
+              </article>
+              <aside class="load-summary" id="loadSummary">
+                <span>Estado del cargue</span><strong>Sin datos cargados</strong><small>La información se comparte con usuarios autorizados.</small>
+              </aside>
+            </section>
+            <section class="import-actions">
+              <button id="downloadExcelTemplate" class="icon-button" type="button"><i data-lucide="sheet"></i> Plantilla Excel</button>
+              <button id="downloadTemplate" class="icon-button" type="button"><i data-lucide="file-down"></i> Plantilla diaria CSV</button>
+              <button id="exportBackup" class="icon-button" type="button"><i data-lucide="archive"></i> Respaldo JSON</button>
+              <button id="clearData" class="icon-button danger" type="button"><i data-lucide="trash-2"></i> Borrar datos</button>
+            </section>
+            <section class="data-panel">
+              <header class="section-heading"><div><p class="eyebrow">Registro</p><h2>Historial de cargues</h2></div></header>
+              <div class="simple-table-wrap"><table class="simple-table"><thead><tr><th>Fecha</th><th>Tipo</th><th>Archivo</th><th>Registros</th><th>Resultados nuevos</th><th>Responsable</th></tr></thead><tbody id="importRows"></tbody></table></div>
+            </section>
+          </section>
+
+          <section class="app-view" data-view="cac" hidden>
+            <div class="view-intro compact">
+              <div>
+                <p class="eyebrow">Reporte ERC 2026</p>
+                <h2>Conciliación de historias y malla SISCAC</h2>
+                <p>Atenciones, soportes clínicos y validaciones por cada uno de los 121 campos CAC.</p>
+              </div>
+              <div class="import-actions">
+                <a class="icon-button" href="/plantilla_atenciones_diabetes.xlsx" download>
+                  <i data-lucide="download"></i> Plantilla de atenciones
+                </a>
+                <button id="refreshCacJobs" class="icon-button" type="button">
+                  <i data-lucide="refresh-cw"></i> Actualizar
+                </button>
+              </div>
+            </div>
+
+            <section class="cac-workspace">
+              <form id="cacSettingsForm" class="cac-settings">
+                <header class="section-heading">
+                  <div><p class="eyebrow">Configuración</p><h2>Datos del reporte</h2></div>
+                  <span class="secure-chip"><i data-lucide="shield-check"></i> Datos privados</span>
+                </header>
+                <div class="cac-form-grid">
+                  <label>Fecha de corte<input id="cacCutoffDate" type="date" value="2026-06-30" required /></label>
+                  <label>Código EAPB<input id="cacEapbCode" maxlength="12" placeholder="EPS040" /></label>
+                  <label>Código IPS REPS<input id="cacIpsCode" inputmode="numeric" maxlength="12" value="050011399101" /></label>
+                  <label>Fecha de afiliación<input id="cacAffiliationDate" type="date" /></label>
+                  <label>Pertenencia étnica
+                    <select id="cacEthnicity"><option value="6">6 · Ninguna de las anteriores</option><option value="1">1 · Indígena</option><option value="2">2 · ROM</option><option value="3">3 · Raizal</option><option value="4">4 · Palenquero</option><option value="5">5 · Afrocolombiano</option></select>
+                  </label>
+                  <label>Grupo poblacional<input id="cacPopulationGroup" value="61" maxlength="2" inputmode="numeric" /></label>
+                  <label>Ingreso a programa renal<input id="cacProgramEntryDate" type="date" /></label>
+                  <label>Costo HTA predeterminado<input id="cacHtnCost" type="number" min="0" step="0.01" placeholder="Solo si aplica a todos" /></label>
+                  <label>Costo DM predeterminado<input id="cacDmCost" type="number" min="0" step="0.01" placeholder="Solo si aplica a todos" /></label>
+                  <label>Costo total predeterminado<input id="cacTotalCost" type="number" min="0" step="0.01" placeholder="Solo si aplica a todos" /></label>
+                  <label class="toggle-control cac-toggle"><input id="cacTerritorialEntity" type="checkbox" /><span>Ente territorial: serial BDUA = 0</span></label>
+                </div>
+              </form>
+
+              <section class="cac-upload-panel">
+                <article class="upload-card primary">
+                  <label for="cacConsultationsFile" class="upload-target">
+                    <span class="upload-icon"><i data-lucide="sheet"></i></span>
+                    <span class="upload-copy"><strong>Atenciones exportadas</strong><small>Excel con la estructura de historias de diabetes</small></span>
+                    <span id="cacConsultationsState" class="upload-state pending">Pendiente</span>
+                  </label>
+                </article>
+                <article class="upload-card">
+                  <label for="cacSupportFiles" class="upload-target">
+                    <span class="upload-icon"><i data-lucide="files"></i></span>
+                    <span class="upload-copy"><strong>Soportes clínicos</strong><small>Uno o varios PDF por documento y fecha</small></span>
+                    <span id="cacSupportsState" class="upload-state pending">Pendiente</span>
+                  </label>
+                </article>
+                <div class="cac-run-panel">
+                  <div>
+                    <span id="cacProgressLabel">Preparado para un nuevo proceso</span>
+                    <div class="progress-track"><span id="cacProgressBar"></span></div>
+                  </div>
+                  <button id="processCacButton" class="icon-button primary" type="button">
+                    <i data-lucide="play"></i> Generar malla
+                  </button>
+                </div>
+              </section>
+            </section>
+
+            <section id="cacResults" class="cac-results" hidden>
+              <div class="cac-metric-grid">
+                <article><span>Pacientes consolidados</span><strong id="cacMetricPatients">0</strong></article>
+                <article><span>Soportes coincidentes</span><strong id="cacMetricSupports">0</strong></article>
+                <article class="ok"><span>Listos para TXT</span><strong id="cacMetricReady">0</strong></article>
+                <article class="warning"><span>Requieren revisión</span><strong id="cacMetricReview">0</strong></article>
+                <article><span>Cobertura de campos</span><strong id="cacMetricCoverage">0%</strong></article>
+              </div>
+              <section class="cac-result-actions">
+                <div>
+                  <strong id="cacResultTitle">Resultado del proceso</strong>
+                  <small id="cacResultSubtitle"></small>
+                </div>
+                <button id="downloadCacXlsx" class="icon-button" type="button"><i data-lucide="file-spreadsheet"></i> Malla y validación</button>
+                <button id="downloadCacTxt" class="icon-button primary" type="button"><i data-lucide="file-down"></i> TXT SISCAC</button>
+              </section>
+              <section class="toolbar cac-toolbar">
+                <div class="search-box"><i data-lucide="search"></i><input id="cacSearch" type="search" placeholder="Buscar documento o paciente" /></div>
+                <select id="cacStatusFilter" aria-label="Filtrar validación">
+                  <option value="all">Todos los estados</option>
+                  <option value="LISTO">Listos</option>
+                  <option value="REVISAR">Requieren revisión</option>
+                  <option value="SIN SOPORTE">Sin soporte PDF</option>
+                </select>
+                <strong id="cacVisibleCount">0 registros</strong>
+              </section>
+              <div class="simple-table-wrap cac-table-wrap">
+                <table class="simple-table">
+                  <thead><tr><th>Estado</th><th>Tipo</th><th>Documento</th><th>Paciente</th><th>Cobertura</th><th>Soportes</th><th>Último soporte</th><th>TFG</th><th>Creatinina</th><th>HbA1c</th><th>RAC</th><th>Validación</th></tr></thead>
+                  <tbody id="cacPatientRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="data-panel cac-history">
+              <header class="section-heading"><div><p class="eyebrow">Trazabilidad</p><h2>Procesos de malla</h2></div></header>
+              <div class="simple-table-wrap">
+                <table class="simple-table">
+                  <thead><tr><th>Fecha</th><th>Estado</th><th>Atenciones</th><th>Soportes</th><th>Listos</th><th>Revisión</th><th>Responsable</th><th></th></tr></thead>
+                  <tbody id="cacJobRows"></tbody>
+                </table>
+              </div>
+            </section>
+          </section>
+
+          <section class="app-view" data-view="audit" hidden>
+            <div class="view-intro compact"><div><p class="eyebrow">Control y seguridad</p><h2>Trazabilidad del sistema</h2><p>Accesos, cargues y cambios administrativos registrados por usuario.</p></div><button id="refreshAudit" class="icon-button" type="button"><i data-lucide="refresh-cw"></i> Actualizar</button></div>
+            <section class="data-panel"><div class="simple-table-wrap"><table class="simple-table"><thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Entidad</th><th>Detalle</th></tr></thead><tbody id="auditRows"></tbody></table></div></section>
+          </section>
+
+          <section class="app-view" data-view="admin" hidden>
+            <div class="view-intro compact"><div><p class="eyebrow">Administración</p><h2>Usuarios, roles y respaldos</h2><p>Acceso mínimo necesario y copias verificables de la base de datos.</p></div><button id="newUserButton" class="icon-button primary" type="button"><i data-lucide="user-plus"></i> Nuevo usuario</button></div>
+            <div class="admin-grid">
+              <section class="data-panel"><header class="section-heading"><div><p class="eyebrow">Acceso</p><h2>Usuarios activos</h2></div></header><div id="userList" class="user-list"></div></section>
+              <section class="data-panel"><header class="section-heading"><div><p class="eyebrow">Continuidad</p><h2>Respaldos</h2></div><button id="createBackupButton" class="icon-button" type="button"><i data-lucide="database-backup"></i> Crear respaldo</button></header><div id="backupList" class="backup-list"></div></section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <dialog id="loginDialog" class="auth-dialog">
+      <form id="loginForm" class="auth-card">
+        <img src="/static/assets/neurum-logo.png" alt="Neurum Centro de especialistas" />
+        <div><p class="eyebrow">Gestión renal compartida</p><h2>Inicio de sesión</h2><p>Ingresa con la cuenta asignada por el administrador.</p></div>
+        <label>Correo institucional<input id="loginEmail" name="email" type="email" autocomplete="username" required /></label>
+        <label>Contraseña<input id="loginPassword" name="password" type="password" autocomplete="current-password" required /></label>
+        <p id="loginError" class="form-error" role="alert"></p>
+        <button class="icon-button primary full" type="submit">Ingresar</button>
+        <small class="security-note"><i data-lucide="shield-check"></i> Acceso auditado y restringido por rol.</small>
+      </form>
+    </dialog>
+
+    <dialog id="taskDialog">
+      <form id="taskForm" class="dialog-shell task-form">
+        <header><div><p class="eyebrow">Gestión del equipo</p><h2 id="taskDialogTitle">Nueva tarea</h2></div><button class="icon-only" type="button" data-close-dialog="taskDialog" aria-label="Cerrar"><i data-lucide="x"></i></button></header>
+        <input id="taskId" type="hidden" />
+        <div id="taskContext" class="task-context" hidden></div>
+        <div id="taskWorkflow" class="task-workflow" aria-label="Flujo de la tarea">
+          <button type="button" data-set-task-status="pendiente"><i data-lucide="circle-dot"></i><span>Pendiente</span></button>
+          <button type="button" data-set-task-status="en_gestion"><i data-lucide="phone-call"></i><span>En gestión</span></button>
+          <button type="button" data-set-task-status="programada"><i data-lucide="calendar-check"></i><span>Programada</span></button>
+          <button type="button" data-set-task-status="completada"><i data-lucide="circle-check-big"></i><span>Resuelta</span></button>
+        </div>
+        <div class="form-grid">
+          <label class="span-2">Título<input id="taskTitle" required maxlength="255" placeholder="Ej. Citar para toma de creatinina" /></label>
+          <label>Documento del paciente<input id="taskPatientId" list="patientOptions" placeholder="Número de documento" /></label>
+          <label>Paraclínico<select id="taskExam"><option value="creatinine">Creatinina</option><option value="albuminuria">Microalbuminuria/ACR</option><option value="hba1c">HbA1c</option><option value="lipids">Perfil lipídico</option><option value="general">Gestión general</option></select></label>
+          <label>Prioridad<select id="taskPriority"><option value="critica">Crítica</option><option value="alta">Alta</option><option value="media" selected>Media</option><option value="baja">Baja</option></select></label>
+          <label>Estado<select id="taskStatus"><option value="pendiente">Pendiente</option><option value="en_gestion">En gestión</option><option value="programada">Programada</option><option value="completada">Resuelta</option><option value="cancelada">Cancelada</option></select></label>
+          <label>Fecha límite<input id="taskDueDate" type="date" /></label>
+          <label>Responsable<select id="taskAssignee"></select></label>
+          <label class="span-2">Descripción<textarea id="taskDescription" rows="3" maxlength="4000"></textarea></label>
+          <label class="span-2">Nota de gestión<textarea id="taskNote" rows="2" maxlength="2000" placeholder="Motivo del cambio o contacto realizado"></textarea></label>
+        </div>
+        <div id="taskHistory" class="task-history" hidden></div>
+        <footer><button class="icon-button" type="button" data-close-dialog="taskDialog">Cancelar</button><button class="icon-button primary" type="submit"><i data-lucide="save"></i> Guardar cambios</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="userDialog">
+      <form id="userForm" class="dialog-shell compact-form">
+        <header><div><p class="eyebrow">Control de acceso</p><h2>Nuevo usuario</h2></div><button class="icon-only" type="button" data-close-dialog="userDialog" aria-label="Cerrar"><i data-lucide="x"></i></button></header>
+        <label>Nombre completo<input id="userFullName" required /></label><label>Correo<input id="userEmail" type="email" required /></label>
+        <label>Rol<select id="userRole"><option value="gestor">Gestor</option><option value="clinico">Clínico</option><option value="auditor">Auditor</option><option value="admin">Administrador</option></select></label>
+        <label>Contraseña temporal<input id="userPassword" type="password" minlength="12" required /></label>
+        <footer><button class="icon-button" type="button" data-close-dialog="userDialog">Cancelar</button><button class="icon-button primary" type="submit">Crear usuario</button></footer>
+      </form>
+    </dialog>
+
+    <dialog id="passwordDialog" class="auth-dialog">
+      <form id="passwordForm" class="auth-card">
+        <div><p class="eyebrow">Primer ingreso</p><h2>Cambia tu contraseña</h2><p>La clave temporal no puede conservarse para trabajar con información clínica.</p></div>
+        <label>Contraseña temporal<input id="currentPassword" type="password" autocomplete="current-password" required /></label>
+        <label>Nueva contraseña<input id="newPassword" type="password" autocomplete="new-password" minlength="12" required /></label>
+        <label>Confirmar nueva contraseña<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required /></label>
+        <p id="passwordError" class="form-error" role="alert"></p>
+        <button class="icon-button primary full" type="submit">Actualizar contraseña</button>
+      </form>
+    </dialog>
+
+    <dialog id="patientDialog">
+      <form method="dialog" class="dialog-shell">
+        <header><div><p class="eyebrow" id="detailDoc"></p><h2 id="detailName">Paciente</h2></div><button class="icon-only" value="close" aria-label="Cerrar"><i data-lucide="x"></i></button></header>
+        <section id="detailContent" class="detail-grid"></section>
+      </form>
+    </dialog>
+
+    <datalist id="patientOptions"></datalist>
+    <div id="toastRegion" class="toast-region" aria-live="polite"></div>
+
+    <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js" defer></script>
+    <script src="/static/shared.js" defer></script>
+    <script src="/static/clinical-engine.js" defer></script>
+  </body>
+</html>

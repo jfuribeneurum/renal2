@@ -1,0 +1,30 @@
+[Unit]
+Description=Neurum Gestion Renal
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=neurum-renal
+Group=neurum-renal
+WorkingDirectory=/opt/neurum-renal/app
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=PYTHONUNBUFFERED=1
+EnvironmentFile=/etc/neurum-renal.env
+ExecStart=/opt/neurum-renal/venv/bin/python /opt/neurum-renal/app/run.py
+Restart=always
+RestartSec=5
+TimeoutStopSec=30
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+ReadWritePaths=/var/lib/neurum-renal /var/backups/neurum-renal
+
+[Install]
+WantedBy=multi-user.target
